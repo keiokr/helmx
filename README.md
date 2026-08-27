@@ -1,6 +1,6 @@
 # helm++<br>
 gpt破甲<br>
-单exe  helmx.exe  <br>
+单exe  gpt.exe  <br>
 原因：之前gpt5.5写poc的时候老是触发安全内容，改5.4有时候能过<br>
 直接5.6 又触发审查<br>
 <br>
