@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>控制台</title>
+<style>
+/* ── Design tokens (from SHVMP) ── */
+:root {
+  --bg: #ffffff;
+  --surface: #f5f5f5;
+  --surface-warm: #fafafa;
+  --fg: #0d0d0d;
+  --fg-2: #1a1a1a;
+  --muted: #6e6e6e;
+  --meta: #9b9b9b;
+  --border: #e5e5e5;
+  --border-soft: #ededed;
+  --accent: #10a37f;
+  --accent-on: #ffffff;
+  --accent-hover: #0a7a5e;
+  --accent-active: color-mix(in oklab, var(--accent), black 14%);
+  --success: #10a37f;
+  --warn: #f5a623;
+  --danger: #ef4146;
+  --font-display: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --leading-body: 1.65;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-pill: 9999px;
+  --elev-flat: none;
+  --elev-ring: 0 0 0 1px var(--border);
+  --elev-raised: 0 4px 16px rgba(13, 13, 13, 0.06);
+  --focus-ring: 0 0 0 3px rgba(16, 163, 127, 0.12);
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.dark-mode {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --surface-warm: #1a1a1a;
+  --fg: #ffffff;
+  --fg-2: #f5f5f5;
+  --muted: #9b9b9b;
+  --meta: #6e6e6e;
+  --border: #3c3c3c;
+  --border-soft: #3c3c3c;
+  --elev-raised: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --focus-ring: 0 0 0 3px rgba(16, 163, 127, 0.25);
+}
+
+/* ── Reset ── */
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--fg); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+body { margin: 0; min-width: 320px; min-height: 100vh; background: var(--bg); color: var(--fg); }
+button, input, select, textarea { font: inherit; }
+button { color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+a { color: inherit; text-decoration: none; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ── Layout ── */
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 236px minmax(0, 1fr); }
+.sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 24px 14px 18px; background: var(--bg); border-right: 1px solid var(--border-soft); z-index: 30; }
+.brand { display: inline-flex; align-items: center; gap: 10px; padding: 0 10px 28px; color: var(--fg); font-weight: 600; letter-spacing: .02em; }
+.brand-mark { display: grid; place-items: center; width: 36px; height: 36px; color: currentColor; }
+.brand-symbol { width: 36px; height: 36px; overflow: visible; }
+.brand-copy { display: grid; gap: 2px; }
+.brand-copy strong { font-size: 15px; }
+.brand-copy span { color: var(--muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; }
+
+/* ── Nav ── */
+.nav-list { display: grid; gap: 4px; }
+.nav-label { margin: 16px 10px 7px; color: var(--muted); font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+.nav-button { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-sm); background: transparent; color: var(--fg-2); cursor: pointer; font-size: 13px; font-weight: 500; text-align: left; transition: background var(--motion-base) var(--ease-standard), color var(--motion-base) var(--ease-standard), border-color var(--motion-base) var(--ease-standard); }
+.nav-button:hover { background: var(--surface); }
+.nav-button.active { background: var(--accent); color: var(--accent-on); border-color: var(--accent); }
+.nav-icon { display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; }
+.nav-icon svg { width: 16px; height: 16px; }
+.nav-spacer { flex: 1; }
+.sidebar-foot { padding: 0 10px; display: grid; gap: 6px; }
+.sidebar-foot .version-tag { color: var(--meta); font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; }
+.sidebar-foot .path-tag { color: var(--muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Main ── */
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 56px; padding: 0 32px; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(12px) saturate(1.4); -webkit-backdrop-filter: blur(12px) saturate(1.4); border-bottom: 1px solid var(--border-soft); }
+.topbar-path { display: flex; align-items: center; gap: 8px; color: var(--fg); font-size: var(--text-base); font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.version-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; }
+.system-status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-pill); color: var(--fg-2); font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+.status-dot.active { background: var(--success); animation: pulse 2.4s var(--ease-standard) infinite; }
+.status-dot.error { background: var(--danger); }
+@keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .48; transform: scale(.82); } }
+.content { flex: 1; padding: 32px 32px 48px; }
+
+/* ── Mobile menu ── */
+.mobile-menu { display: none; place-items: center; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); cursor: pointer; }
+
+/* ── Page heading ── */
+.page-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: var(--space-8); }
+.page-heading h1 { margin: 0; font-family: var(--font-body); font-size: var(--text-2xl); line-height: 1.15; letter-spacing: -0.01em; font-weight: 600; }
+.page-heading p { margin: 7px 0 0; color: var(--muted); font-size: var(--text-sm); line-height: var(--leading-body); max-width: 640px; }
+
+/* ── Panel ── */
+.panel { border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--surface); margin-bottom: var(--space-6); }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 56px; padding: 0 18px; border-bottom: 1px solid var(--border-soft); }
+.panel-head h2 { margin: 0; font-family: var(--font-body); font-size: var(--text-xl); line-height: 1.3; font-weight: 600; }
+.panel-head span { color: var(--muted); font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; }
+.panel-body { padding: 18px; }
+
+/* ── Metric strip ── */
+.metric-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: var(--space-6); border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--surface); }
+.metric { min-height: 108px; padding: 18px; border-right: 1px solid var(--border-soft); }
+.metric:last-child { border-right: 0; }
+.metric span { display: block; color: var(--muted); font-size: 11px; }
+.metric strong { display: block; margin-top: 10px; font-family: var(--font-body); font-size: var(--text-2xl); line-height: 1; font-weight: 600; }
+.metric em { display: block; margin-top: 8px; color: var(--fg-2); font-size: 11px; font-style: normal; }
+.metric em.ok { color: var(--success); }
+.metric em.bad { color: var(--danger); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 22px; border: 1px solid transparent; border-radius: var(--radius-sm); font-size: var(--text-sm); font-weight: 500; cursor: pointer; transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard); }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.btn.primary { background: var(--accent); color: var(--accent-on); }
+.btn.primary:hover { background: var(--accent-hover); }
+.btn.secondary { border-color: var(--border); background: var(--bg); color: var(--fg-2); }
+.btn.secondary:hover { border-color: var(--fg-2); }
+.btn.danger { border-color: var(--danger); background: transparent; color: var(--danger); }
+.btn.danger:hover { background: var(--danger); color: #fff; }
+.btn:disabled { opacity: .4; cursor: default; }
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ── Inputs ── */
+.input, .select, .textarea { width: 100%; min-height: 42px; padding: 0 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); color: var(--fg); font-size: var(--text-sm); }
+.input:focus, .select:focus, .textarea:focus { outline: none; box-shadow: var(--focus-ring); border-color: var(--accent); }
+.input::placeholder { color: var(--muted); }
+.textarea { min-height: 118px; padding: 12px; resize: vertical; }
+.field { display: grid; gap: 8px; }
+.field label { color: var(--fg-2); font-size: 11px; font-weight: 500; }
+.field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+
+/* ── Table ── */
+.table-shell { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+thead th { padding: 10px 18px; border-bottom: 1px solid var(--border-soft); color: var(--muted); font-size: 11px; font-weight: 500; letter-spacing: .06em; text-align: left; }
+tbody td { padding: 14px 18px; border-bottom: 1px solid var(--border-soft); font-size: var(--text-sm); }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: color-mix(in srgb, var(--surface) 60%, var(--bg)); }
+
+/* ── Status badge ── */
+.status { display: inline-flex; align-items: center; gap: 7px; width: fit-content; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--fg-2); font-family: var(--font-mono); font-size: 10px; }
+.status .status-dot { width: 6px; height: 6px; box-shadow: none; background: var(--fg-2); }
+.status.done .status-dot { background: var(--success); }
+.status.running .status-dot { background: var(--accent); animation: pulse 2.4s var(--ease-standard) infinite; }
+.status.error .status-dot { background: var(--danger); }
+.status.error { color: var(--danger); border-color: var(--danger); }
+
+/* ── Terminal output ── */
+.term { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius-sm); padding: 14px; font: 11.5px/1.6 var(--font-mono); color: var(--fg-2); white-space: pre-wrap; word-break: break-all; min-height: 80px; max-height: 320px; overflow-y: auto; user-select: text; }
+
+/* ── Toast ── */
+.toast { position: fixed; right: 24px; bottom: 24px; z-index: 80; display: flex; align-items: center; gap: 10px; max-width: min(360px, calc(100vw - 32px)); padding: 12px 14px; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: var(--surface); color: var(--fg); box-shadow: var(--elev-raised); font-size: 12px; }
+.toast[hidden] { display: none; }
+.toast:not([hidden]) { animation: toast-in 200ms var(--ease-standard) both; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Dialog ── */
+.dialog-backdrop { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(0,0,0,.45); animation: backdrop-in 160ms var(--ease-standard) both; }
+.dialog { width: min(520px, calc(100vw - 40px)); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg); box-shadow: 0 24px 60px rgba(0,0,0,.18); animation: dialog-in 220ms var(--ease-standard) both; }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border-soft); }
+.dialog-head h2 { margin: 0; font-size: var(--text-lg); font-weight: 600; }
+.dialog-close { display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--muted); cursor: pointer; }
+.dialog-close:hover { background: var(--surface); color: var(--fg); }
+.dialog-body { padding: 18px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--border-soft); }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(6px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ── Views ── */
+.view { display: none; }
+.view.active { display: block; animation: view-in 260ms var(--ease-standard) both; }
+.qa-list { display: grid; gap: 10px; }
+.qa-item { border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--bg); }
+.qa-item summary { padding: 14px 16px; cursor: pointer; font-weight: 600; }
+.qa-answer { padding: 0 16px 16px; color: var(--fg-2); line-height: 1.7; white-space: pre-wrap; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.44); }
+.modal-backdrop[hidden] { display: none; }
+.modal { width: min(440px, 100%); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); box-shadow: 0 20px 60px rgba(0,0,0,.24); padding: 22px; }
+.modal h2 { margin: 0 0 8px; font-size: var(--text-xl); }
+.modal p { margin: 0 0 20px; color: var(--muted); line-height: 1.6; }
+@keyframes view-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: 260px; transform: translateX(-100%); transition: transform var(--motion-base) var(--ease-standard); box-shadow: var(--elev-raised); }
+  .sidebar.open { transform: translateX(0); }
+  .mobile-menu { display: grid; }
+  .topbar { padding: 0 20px; }
+  .content { padding: 24px 20px 48px; }
+  .metric-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric { border-bottom: 1px solid var(--border-soft); }
+  .metric:nth-child(2) { border-right: 0; }
+  .metric:nth-child(3), .metric:nth-child(4) { border-bottom: 0; }
+  .metric:nth-child(4) { border-right: 0; }
+  .field-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  #page-title, .system-status { display: none; }
+  .page-heading { display: grid; align-items: start; }
+  .content { padding: 20px 12px 44px; }
+  .topbar { padding: 0 12px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg class="brand-symbol" viewBox="0 0 40 40" focusable="false">
+          <rect x="4" y="4" width="32" height="32" rx="8" fill="var(--accent)" />
+          <text x="20" y="27" text-anchor="middle" fill="white" font-size="18" font-weight="700" font-family="var(--font-mono)">H</text>
+        </svg>
+      </span>
+      <span class="brand-copy"><strong>helm-x</strong><span>环境控制</span></span>
+    </div>
+    <nav class="nav-list" aria-label="主导航">
+      <p class="nav-label">概览</p>
+      <button class="nav-button active" data-view="verify"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>自检</button>
+      <button class="nav-button" data-view="dashboard"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg></span>系统总览</button>
+      <p class="nav-label">配置</p>
+      <button class="nav-button" data-view="services"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg></span>服务</button>
+      <button class="nav-button" data-view="prompt"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>提示词</button>
+      <button class="nav-button" data-view="context"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span>上下文</button>
+      <button class="nav-button" data-view="rewriter"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9"/></svg></span>改写器</button>
+      <p class="nav-label">调试</p>
+      <button class="nav-button" data-view="rules"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h4"/></svg></span>规则</button>
+      <p class="nav-label">日志</p>
+      <button class="nav-button" data-view="logs"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>运行日志</button>
+      <p class="nav-label">帮助</p>
+      <button class="nav-button" data-view="qa"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M9.7 9a2.4 2.4 0 1 1 3.6 2.1c-.8.4-1.3 1-1.3 1.9M12 17h.01"/></svg></span>QA 帮助</button>
+    </nav>
+    <div class="nav-spacer"></div>
+    <div class="sidebar-foot">
+      <span class="path-tag">~/.codex</span>
+      <span class="version-tag">v0.0.10</span>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-path">
+        <button class="mobile-menu" id="menu-toggle" aria-label="打开导航"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+        <span id="page-title">自检</span>
+      </div>
+      <div class="topbar-right">
+        <span class="system-status" id="proxy-pill"><span class="status-dot" id="proxy-pill-dot"></span><span id="proxy-pill-text">检测中</span></span>
+
+        <span class="system-status" id="watch-pill" style="display:none"><span class="status-dot" id="watch-dot"></span><span id="watch-text">watch</span></span>
+        <span class="version-tag">v0.0.10</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── Dashboard ── -->
+      <section class="view" id="view-dashboard">
+        <div class="page-heading"><div><h1>系统总览</h1><p>Codex 环境控制状态一览。</p></div>
+          <div class="actions">
+            <button class="btn secondary" onclick="restartProxy()">重启服务</button>
+            <button class="btn secondary" onclick="shutdownHelmx()">关闭并还原配置</button>
+          </div>
+        </div>
+        <div class="metric-strip">
+          <div class="metric"><span>代理</span><strong id="proxy-metric-state">—</strong><em id="proxy-metric-desc">—</em></div>
+          <div class="metric"><span>改写器</span><strong id="rw-state-metric">—</strong><em id="rw-desc-metric">—</em></div>
+          <div class="metric"><span>TAMPER 规则</span><strong id="rules_count">—</strong><em>拒绝句式匹配</em></div>
+          <div class="metric"><span>提示词</span><strong id="prompt-mode-metric">—</strong><em id="prompt-mode-desc">—</em></div>
+        </div>
+      </section>
+
+      <!-- ── Verify ── -->
+      <section class="view active" id="view-verify">
+        <div class="page-heading"><div><h1>验证</h1><p>隔离会话激活验证与完整性自检。</p></div></div>
+        <div class="panel">
+          <div class="panel-head"><h2>激活验证</h2><span>隔离执行 codex exec "helmx"</span></div>
+          <div class="panel-body">
+            <p style="font-size:12px;color:var(--muted);margin:0 0 12px">用于确认代理注入是否生效，不会改变当前 Codex Desktop 线程。</p>
+            <div class="actions">
+              <button class="btn primary" id="btn-zxwn" onclick="startZxwn()" disabled>重新运行激活自检 (helmx)</button>
+              <span style="font-size:12px;color:var(--muted)" id="zxwn-status">等待自动激活…</span>
+            </div>
+            <div class="term" id="zxwn-output" style="margin-top:12px">—</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>完整性自检</h2><span>7 项检查</span></div>
+          <div class="panel-body">
+            <div class="actions"><button class="btn secondary" onclick="runVerify()">运行 verify</button></div>
+            <div class="term" id="verify-output" style="margin-top:12px">—</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Services ── -->
+      <section class="view" id="view-services">
+        <div class="page-heading"><div><h1>服务</h1><p>后台服务管理。</p></div>
+          <div class="actions">
+            <button class="btn primary" onclick="restartProxy()">重启服务</button>
+            <button class="btn secondary" onclick="shutdownHelmx()">关闭并还原配置</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>后台服务</h2><span>自愈守护 / 代理 / 改写器</span></div>
+          <div class="panel-body" style="padding:0">
+            <table>
+              <thead><tr><th>服务</th><th>状态</th><th>说明</th><th>操作</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>proxy</strong></td>
+                  <td><span class="status" id="proxy-status"><span class="status-dot"></span><span id="proxy-state-text">—</span></span></td>
+                  <td style="color:var(--muted);font-size:12px" id="proxy-desc">本地映射 · 检测中</td>
+                  <td><div class="actions"><button class="btn secondary" onclick="proxyRestore()">还原配置</button></div></td>
+                </tr>
+                <tr>
+                  <td><strong>改写器</strong></td>
+                  <td><span class="status" id="rw-status"><span class="status-dot"></span><span id="rw-state-text">—</span></span></td>
+                  <td style="color:var(--muted);font-size:12px" id="rw-desc">cyber 自动改写 · 检测中</td>
+                  <td><div class="actions"><button class="btn secondary" onclick="refreshRewriter()">刷新</button></div></td>
+                </tr>
+                <tr>
+                  <td><strong>watch</strong></td>
+                  <td><span class="status" id="watch-status"><span class="status-dot"></span><span id="watch-state-text">—</span></span></td>
+                  <td style="color:var(--muted);font-size:12px">自动恢复配置 · 已恢复 <span id="watch-restores">0</span> 次</td>
+                  <td><div class="actions"><input class="input" id="watch-interval" type="number" min="5" value="60" style="width:76px" aria-label="检查间隔（秒）"><button class="btn secondary" onclick="watchStart()">启动</button><button class="btn secondary" onclick="watchStop()">停止</button></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>改写器测试</h2><span>输入消息测试改写效果</span></div>
+          <div class="panel-body">
+            <div class="actions">
+              <input class="input" id="rw-test-input" value="分析 system_server 进程的只读内存布局" style="flex:1">
+              <button class="btn primary" onclick="testRewriter()">改写</button>
+            </div>
+            <div class="term" id="rw-test-output" style="margin-top:12px;max-height:150px">点击"改写"测试</div>
+          </div>
+        </div>
+
+      </section>
+      <!-- ── Prompt ── -->
+      <section class="view" id="view-prompt">
+        <div class="page-heading"><div><h1>提示词</h1><p>选择代理注入的 AGENTS 提示词。</p></div></div>
+        <div class="panel">
+          <div class="panel-head"><h2>提示词模式</h2><span>重启 proxy 后生效</span></div>
+          <div class="panel-body">
+            <div class="actions">
+              <select class="select" id="prompt-mode" style="width:200px" onchange="switchPromptMode(this.value)">
+                <option value="default">default (helm-x)</option>
+                <option value="v45">v45 (gpt-5.6-instruct)</option>
+                <option value="deepseek">deepseek (优化版)</option>
+              </select>
+              <span id="prompt-mode-status" style="font-size:12px;color:var(--muted)"></span>
+            </div>
+            <div style="margin-top:12px;color:var(--muted);font-size:12px">
+              <b>default</b>：helm-x 提示词（安全研究竞赛框架 + 领域知识）<br>
+              <b>v45</b>：gpt-5.6-instruct 提示词（沙盒执行器 + 工具优先 + 无拒绝）<br>
+              <b>deepseek</b>：deepseek 优化版（CTF 计分制 + 输出锁定 + 归一化）
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-context">
+        <div class="page-heading"><div><h1>上下文</h1><p>Context Gardener 与 Codex 请求压缩设置。</p></div></div>
+        <div class="panel">
+          <div class="panel-head"><h2>Context Gardener</h2><span>实时保存到配置</span></div>
+          <div class="panel-body">
+            <div class="field-grid">
+              <div class="field"><label>启用裁剪</label><select class="select" id="ctx-enabled"><option value="true">启用</option><option value="false">禁用</option></select></div>
+              <div class="field"><label>工具输出裁剪阈值（字节）</label><input class="input" id="ctx-threshold" type="number" min="1024" max="16777216"></div>
+              <div class="field"><label>工具输出 token 上限</label><input class="input" id="ctx-output-limit" type="number" min="1000" max="100000"></div>
+              <div class="field"><label>自动压缩阈值（token）</label><input class="input" id="ctx-compact-limit" type="number" min="10000" max="1000000"></div>
+              <div class="field"><label>压缩计算范围</label><select class="select" id="ctx-scope"><option value="body_after_prefix">body_after_prefix</option><option value="total">total</option></select></div>
+            </div>
+            <div class="actions" style="margin-top:18px"><button class="btn primary" onclick="saveContextConfig()">保存上下文配置</button><button class="btn secondary" onclick="loadContextConfig()">重新加载</button></div>
+            <p style="margin-top:14px;color:var(--muted);font-size:12px">历史工具输出超过阈值时会在发往上游前被替换；当前请求中的图片不裁剪。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-qa">
+        <div class="page-heading"><div><h1>QA 帮助</h1><p>常见错误和处理办法，可从 GitHub 自动更新。</p></div>
+          <div class="actions"><button class="btn secondary" onclick="loadQa(true)">检查更新</button></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>问题列表</h2><span id="qa-source">加载中</span></div>
+          <div class="panel-body">
+            <input class="input" id="qa-search" placeholder="搜索错误、配置或功能" oninput="renderQa(this.value)" style="width:100%;margin-bottom:14px">
+            <div class="qa-list" id="qa-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Rewriter ── -->
+      <section class="view" id="view-rewriter">
+        <div class="page-heading"><div><h1>改写器</h1><p>配置消息改写 API。</p></div>
+          <div class="actions">
+            <button class="btn primary" onclick="toggleRewriter(true)">启用</button>
+            <button class="btn danger" onclick="toggleRewriter(false)">禁用</button>
+            <span id="rw-toggle-status" style="font-size:12px"></span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>API 配置</h2><span>%APPDATA%\helmx.config.json</span></div>
+          <div class="panel-body">
+            <div class="field-grid">
+              <div class="field"><label>Provider</label><input class="input" id="rw-cfg-provider" placeholder="nvidia"></div>
+              <div class="field"><label>Model</label><input class="input" id="rw-cfg-model" placeholder="meta/llama-3.1-8b-instruct"></div>
+              <div class="field"><label>API Key</label><input class="input" id="rw-cfg-apikey" type="password" placeholder="留空保留现有密钥"></div>
+              <div class="field"><label>Base URL</label><input class="input" id="rw-cfg-baseurl" placeholder="https://integrate.api.nvidia.com/v1"></div>
+              <div class="field"><label>Proxy URL</label><input class="input" id="rw-cfg-proxyurl" placeholder="http://127.0.0.1:7897"></div>
+              <div class="field"><label>Timeout (秒)</label><input class="input" id="rw-cfg-timeout" value="60" type="number"></div>
+              <div class="field"><label>Use Proxy</label><select class="select" id="rw-cfg-useproxy"><option value="false">否</option><option value="true">是</option></select></div>
+            </div>
+            <div class="actions" style="margin-top:18px">
+              <button class="btn primary" onclick="saveRewriterConfig()">保存配置</button>
+              <button class="btn secondary" onclick="loadRewriterConfig()">重新加载</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Rules ── -->
+      <section class="view" id="view-rules">
+        <div class="page-heading"><div><h1>TAMPER 规则</h1><p>拒绝句式匹配规则列表。</p></div></div>
+        <div class="panel">
+          <div class="panel-head"><h2>规则列表</h2><span>regex</span></div>
+          <div class="panel-body" style="padding:0" id="rules-list"><div style="padding:22px 18px;color:var(--muted);font-size:12px;text-align:center">加载中…</div></div>
+        </div>
+      </section>
+
+      <!-- ── Logs ── -->
+      <section class="view" id="view-logs">
+        <div class="page-heading"><div><h1>运行日志</h1><p>代理运行日志。</p></div></div>
+        <div class="panel">
+          <div class="panel-head"><h2>Cyber 日志</h2><span>~/.codex/helmx-cyber.log</span></div>
+          <div class="panel-body"><div class="term" id="cyber-log-output" style="max-height:300px">加载中…</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>代理日志</h2><span>~/.codex/helmx.log</span></div>
+          <div class="panel-body"><div class="term" id="log-output" style="max-height:400px">加载中…</div></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast" hidden><span id="toast-message">操作已完成</span></div>
+<div class="modal-backdrop" id="qa-welcome" hidden role="dialog" aria-modal="true" aria-labelledby="qa-welcome-title">
+  <div class="modal">
+    <h2 id="qa-welcome-title">你遇到了错误，是否查看 QA？</h2>
+    <p>这里整理了常见错误和处理方法，内容可从 GitHub 更新。</p>
+    <div class="actions"><button class="btn primary" onclick="answerQaWelcome(true)">A. 是的</button><button class="btn secondary" onclick="answerQaWelcome(false)">B. 好的</button></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+/* ── Navigation ── */
+document.querySelectorAll('.nav-button').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.nav-button').forEach(e => e.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    el.classList.add('active');
+    const viewId = 'view-' + el.dataset.view;
+    $(viewId).classList.add('active');
+    $('page-title').textContent = el.textContent.trim();
+    $('sidebar').classList.remove('open');
+  });
+});
+
+/* ── Mobile menu ── */
+$('menu-toggle').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+document.addEventListener('click', e => { if (!e.target.closest('.sidebar') && !e.target.closest('#menu-toggle')) $('sidebar').classList.remove('open'); });
+
+/* ── Theme toggle ── */
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+if (prefersDark) document.documentElement.classList.add('dark-mode');
+
+/* ── Helpers ── */
+async function request(path, options) {
+  const r = await fetch(path, options);
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error || ('HTTP ' + r.status));
+  return body;
+}
+async function get(path) { return request(path); }
+async function post(path, body) { return request(path, { method: 'POST', body: body || '' }); }
+function showToast(msg) { const t = $('toast'); $('toast-message').textContent = msg; t.hidden = false; setTimeout(() => t.hidden = true, 2400); }
+function openView(name) { const button = document.querySelector('[data-view="' + name + '"]'); if (button) button.click(); }
+
+const QA_REMOTE = 'https://raw.githubusercontent.com/ADWMC/helm-x/master/assets/qa.json';
+let qaItems = [];
+function validQa(data) { return data && Array.isArray(data.items) && data.items.every(x => typeof x.question === 'string' && typeof x.answer === 'string'); }
+async function fetchQa(url, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try { const r = await fetch(url, { cache: 'no-store', signal: controller.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  finally { clearTimeout(timer); }
+}
+async function loadQa(manual) {
+  let data, source = '内置';
+  try {
+    data = await fetchQa(QA_REMOTE + '?t=' + Date.now(), 4000);
+    if (!validQa(data)) throw new Error('格式错误');
+    localStorage.setItem('helmx-qa-cache', JSON.stringify(data));
+    source = 'GitHub · ' + (data.updated_at || '最新');
+  } catch (e) {
+    try { data = JSON.parse(localStorage.getItem('helmx-qa-cache') || 'null'); if (validQa(data)) source = '缓存 · ' + (data.updated_at || ''); else data = null; } catch (_) { data = null; }
+    if (!data) { data = await get('/api/qa'); if (!validQa(data)) data = { items: [] }; source = '内置 · ' + (data.updated_at || ''); }
+    if (manual) showToast('GitHub 更新失败，已使用' + source);
+  }
+  qaItems = data.items;
+  $('qa-source').textContent = source + ' · ' + qaItems.length + ' 项';
+  renderQa($('qa-search').value);
+  if (manual && source.startsWith('GitHub')) showToast('QA 已更新');
+}
+function renderQa(query) {
+  const box = $('qa-list');
+  const keyword = String(query || '').trim().toLowerCase();
+  const items = qaItems.filter(x => !keyword || (x.question + ' ' + x.answer).toLowerCase().includes(keyword));
+  box.replaceChildren();
+  if (!items.length) { const empty = document.createElement('div'); empty.className = 'qa-answer'; empty.textContent = '没有匹配的问题'; box.appendChild(empty); return; }
+  items.forEach(item => {
+    const details = document.createElement('details'); details.className = 'qa-item';
+    const summary = document.createElement('summary'); summary.textContent = item.question;
+    const answer = document.createElement('div'); answer.className = 'qa-answer'; answer.textContent = item.answer;
+    details.append(summary, answer); box.appendChild(details);
+  });
+}
+function answerQaWelcome(openQa) { $('qa-welcome').hidden = true; sessionStorage.setItem('helmx-qa-welcome', '1'); if (openQa) openView('qa'); }
+
+/* ── Status ── */
+async function refreshStatus() {
+  try {
+    const s = await get('/api/status');
+    $('rules_count').textContent = s.rules;
+    // Proxy metric + topbar pill
+    const p = await get('/api/proxy');
+    const pState = $('proxy-metric-state'), pDesc = $('proxy-metric-desc');
+    const pDot = $('proxy-pill-dot'), pText = $('proxy-pill-text');
+    if (p.running && p.proxied) {
+      pState.textContent = 'RUNNING'; pState.style.color = 'var(--success)';
+      pDesc.textContent = p.relay || '';
+      pDot.className = 'status-dot active'; pText.textContent = 'PROXY ON';
+    } else if (p.proxied) {
+      pState.textContent = 'BROKEN'; pState.style.color = 'var(--danger)';
+      pDesc.textContent = 'config 指向 1800 但 proxy 未运行';
+      pDot.className = 'status-dot error'; pText.textContent = 'BROKEN';
+    } else {
+      pState.textContent = 'DIRECT'; pState.style.color = 'var(--muted)';
+      pDesc.textContent = '直连 ' + (p.cfg_base || '');
+      pDot.className = 'status-dot'; pText.textContent = 'DIRECT';
+    }
+    // Rewriter metric
+    const rw = await get('/api/rewriter');
+    const rwState = $('rw-state-metric'), rwDesc = $('rw-desc-metric');
+    if (!rw.loaded) { rwState.textContent = 'NO CONFIG'; rwState.style.color = 'var(--danger)'; rwDesc.textContent = '未找到配置'; }
+    else if (rw.enabled) { rwState.textContent = 'ON'; rwState.style.color = 'var(--success)'; rwDesc.textContent = rw.provider + ' · ' + rw.model; }
+    else { rwState.textContent = 'OFF'; rwState.style.color = 'var(--muted)'; rwDesc.textContent = '已禁用'; }
+    // Prompt mode
+    loadPromptMode();
+  } catch (e) {
+    $('proxy-metric-state').textContent = 'OFFLINE';
+    $('proxy-metric-state').style.color = 'var(--danger)';
+    $('proxy-metric-desc').textContent = e.message;
+    $('proxy-pill-dot').className = 'status-dot error';
+    $('proxy-pill-text').textContent = 'OFFLINE';
+  }
+}
+
+/* ── Rules ── */
+async function refreshRules() {
+  try {
+    const rules = await get('/api/rules');
+    const box = $('rules-list');
+    if (!rules.length) { box.innerHTML = '<div style="padding:22px 18px;color:var(--muted);font-size:12px;text-align:center">无规则</div>'; return; }
+    let html = '<table><thead><tr><th>#</th><th>Pattern</th><th>Type</th></tr></thead><tbody>';
+    rules.forEach(r => {
+      html += '<tr><td style="color:var(--muted);font-family:var(--font-mono);font-size:10px">' + r.id + '</td><td style="font-family:var(--font-mono);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px">' + r.pattern.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</td><td><span class="status done"><span class="status-dot"></span>REGEX</span></td></tr>';
+    });
+    html += '</tbody></table>';
+    box.innerHTML = html;
+  } catch (e) { $('rules-list').textContent = '规则加载失败: ' + e.message; }
+}
+
+/* ── Actions ── */
+async function act(path) {
+  try {
+    const r = await fetch(path, { method: 'POST' });
+    const j = await r.json();
+    showToast(j.ok ? '操作成功' : '失败: ' + (j.error || r.status));
+    refreshStatus();
+  } catch (e) { showToast('请求失败: ' + e); }
+}
+
+/* ── Verify ── */
+async function runVerify() {
+  const out = $('verify-output');
+  out.textContent = '运行中…';
+  try {
+    const j = await get('/api/verify');
+    out.textContent = j.report;
+    showToast(j.ok ? '自检通过' : '自检发现异常');
+  } catch (e) { out.textContent = '请求失败: ' + e; }
+}
+
+/* ── zxwn ── */
+async function startZxwn() {
+  const btn = $('btn-zxwn');
+  btn.disabled = true;
+  $('zxwn-status').textContent = '运行中… (最长 4 分钟)';
+  $('zxwn-output').textContent = '发送 helmx 到 codex…';
+  try { await post('/api/zxwn/start'); pollZxwn(); }
+  catch (e) { btn.disabled = false; $('zxwn-status').textContent = '启动失败'; $('zxwn-output').textContent = String(e); }
+}
+async function pollZxwn() {
+  try {
+    const j = await get('/api/zxwn');
+    if (!j.started) {
+      $('btn-zxwn').disabled = true;
+      $('zxwn-status').textContent = '等待自动激活…';
+      $('zxwn-status').style.color = 'var(--muted)';
+      $('zxwn-output').textContent = '等待本地代理就绪…';
+      setTimeout(pollZxwn, 1000);
+      return;
+    }
+    if (j.running) { setTimeout(pollZxwn, 2000); return; }
+    $('btn-zxwn').disabled = false;
+    $('zxwn-output').textContent = j.output || '(空回复)';
+    $('zxwn-status').textContent = j.activated ? '✓ 激活确认' : '✗ 未检测到激活语';
+    $('zxwn-status').style.color = j.activated ? 'var(--success)' : 'var(--danger)';
+  } catch (e) { $('btn-zxwn').disabled = false; $('zxwn-status').textContent = '轮询失败'; setTimeout(pollZxwn, 3000); }
+}
+
+setTimeout(pollZxwn, 300);
+
+/* ── Watch ── */
+async function refreshWatch() {
+  try {
+    const w = await get('/api/watch');
+    $('watch-restores').textContent = w.restores;
+    const st = $('watch-status'), stt = $('watch-state-text');
+    if (w.running) { st.className = 'status running'; stt.textContent = 'RUNNING'; $('watch-pill').style.display = ''; $('watch-dot').className = 'status-dot active'; $('watch-text').textContent = 'watch ' + w.restores; }
+    else { st.className = 'status'; stt.textContent = 'STOPPED'; $('watch-pill').style.display = 'none'; }
+  } catch (e) { showToast('watch 状态读取失败: ' + e.message); }
+}
+async function watchStart() {
+  const iv = parseInt($('watch-interval').value) || 60;
+  try { await post('/api/watch/start', String(iv)); showToast('watch 已启动 (' + Math.max(iv, 5) + 's)'); refreshWatch(); }
+  catch (e) { showToast('启动失败'); }
+}
+async function watchStop() {
+  try { await post('/api/watch/stop'); showToast('watch 已停止'); refreshWatch(); }
+  catch (e) { showToast('停止失败'); }
+}
+
+/* ── Proxy ── */
+async function refreshProxy() {
+  try {
+    const p = await get('/api/proxy');
+    const st = $('proxy-status'), stt = $('proxy-state-text');
+    if (p.running && p.proxied) { st.className = 'status running'; stt.textContent = 'RUNNING'; $('proxy-desc').textContent = 'codex → 127.0.0.1:1800 → ' + p.relay; }
+    else if (p.proxied) { st.className = 'status error'; stt.textContent = 'BROKEN'; $('proxy-desc').textContent = 'config 指向 1800 但 proxy 未运行'; }
+    else { st.className = 'status'; stt.textContent = 'DIRECT'; $('proxy-desc').textContent = '直连 ' + (p.cfg_base || ''); }
+  } catch (e) { $('proxy-desc').textContent = '状态读取失败: ' + e.message; }
+}
+async function proxyRestore() {
+  try { const r = await fetch('/api/proxy/restore', { method: 'POST' }); const j = await r.json(); showToast(j.ok ? '配置已还原' : '没有需要还原的'); refreshStatus(); }
+  catch (e) { showToast('请求失败'); }
+}
+async function shutdownHelmx() {
+  if (!confirm('关闭 helm-x 并还原 Codex 配置？')) return;
+  try {
+    const r = await fetch('/api/shutdown', { method: 'POST' });
+    const j = await r.json();
+    showToast(j.restored ? '配置已还原，正在关闭' : '正在关闭（没有可用备份）');
+    setTimeout(() => { window.location.replace('about:blank'); }, 800);
+  } catch (e) {
+    // The process may already have closed after restoring the config.
+    window.location.replace('about:blank');
+  }
+}
+async function restartProxy() {
+  showToast('正在重启...');
+  try {
+    const r = await fetch('/api/restart', { method: 'POST' });
+    const j = await r.json();
+    showToast(j.message || '重启中');
+    // Poll until service is back
+    setTimeout(() => { window.location.reload(); }, 3000);
+  } catch (e) {
+    // If fetch fails, service might already be restarting
+    setTimeout(() => { window.location.reload(); }, 3000);
+  }
+}
+
+/* ── Log ── */
+async function refreshLog() {
+  try { const j = await get('/api/log'); $('log-output').textContent = j.log || '(空)'; $('log-output').scrollTop = $('log-output').scrollHeight; } catch (e) {}
+}
+async function refreshCyberLog() {
+  try { const j = await get('/api/cyber-log'); $('cyber-log-output').textContent = j.log || '(无 cyber 事件)'; $('cyber-log-output').scrollTop = $('cyber-log-output').scrollHeight; } catch (e) {}
+}
+
+/* ── Rewriter ── */
+async function refreshRewriter() {
+  try {
+    const r = await get('/api/rewriter');
+    const st = $('rw-status'), stt = $('rw-state-text');
+    if (!r.loaded) { st.className = 'status error'; stt.textContent = 'NO CONFIG'; $('rw-desc').textContent = '改写器配置加载失败'; $('rw-state-metric').textContent = 'NO CONFIG'; $('rw-desc-metric').textContent = '配置加载失败'; }
+    else if (r.enabled) { st.className = 'status running'; stt.textContent = 'ON'; $('rw-desc').textContent = r.provider + ' · ' + r.model + ' · key ' + (r.key || '无'); $('rw-state-metric').textContent = 'ON'; $('rw-desc-metric').textContent = r.provider + ' · ' + r.model; }
+    else { st.className = 'status'; stt.textContent = 'OFF'; $('rw-desc').textContent = '改写器关闭'; $('rw-state-metric').textContent = 'OFF'; $('rw-desc-metric').textContent = '已禁用'; }
+  } catch (e) {}
+}
+async function testRewriter() {
+  const input = $('rw-test-input').value;
+  const output = $('rw-test-output');
+  output.textContent = '改写中...';
+  try {
+    const resp = await fetch('/api/rewriter/test', { method: 'POST', headers: {'Content-Type': 'text/plain'}, body: input });
+    const r = await resp.json();
+    if (r.error) output.textContent = '错误: ' + r.error;
+    else if (r.ok) output.textContent = '输入: ' + r.input + '\n\n输出: ' + r.output;
+    else output.textContent = '改写失败（本地规则无匹配）';
+  } catch (e) { output.textContent = '请求失败: ' + e.message; }
+}
+async function loadRewriterConfig() {
+  try {
+    const r = await get('/api/rewriter');
+    if (r.loaded) {
+      $('rw-cfg-provider').value = r.provider || '';
+      $('rw-cfg-model').value = r.model || '';
+      $('rw-cfg-apikey').value = '';
+      $('rw-cfg-baseurl').value = r.base_url || '';
+      $('rw-cfg-proxyurl').value = r.proxy_url || '';
+      $('rw-cfg-timeout').value = r.timeout_sec || 60;
+      $('rw-cfg-useproxy').value = r.use_proxy ? 'true' : 'false';
+      $('rw-cfg-apikey').placeholder = r.key ? '已配置，留空保留' : '输入 API Key';
+      $('rw-toggle-status').textContent = r.enabled ? '已启用' : '已禁用';
+      $('rw-toggle-status').style.color = r.enabled ? 'var(--success)' : 'var(--danger)';
+    }
+  } catch (e) {}
+}
+async function saveRewriterConfig() {
+  const config = {
+    enabled: $('rw-toggle-status').textContent === '已启用',
+    provider: $('rw-cfg-provider').value,
+    model: $('rw-cfg-model').value,
+    api_key: $('rw-cfg-apikey').value,
+    base_url: $('rw-cfg-baseurl').value,
+    proxy_url: $('rw-cfg-proxyurl').value,
+    timeout_sec: parseInt($('rw-cfg-timeout').value) || 60,
+    use_proxy: $('rw-cfg-useproxy').value === 'true'
+  };
+  try {
+    const resp = await fetch('/api/rewriter/save', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(config) });
+    const r = await resp.json();
+    showToast(r.ok ? '配置已保存' : '保存失败: ' + (r.error || ''));
+    if (r.ok) loadRewriterConfig();
+  } catch (e) { showToast('请求失败: ' + e.message); }
+}
+async function loadPromptMode() {
+  try {
+    const r = await get('/api/prompt-mode');
+    $('prompt-mode-metric').textContent = r.mode || 'default';
+    $('prompt-mode-desc').textContent = r.desc || '';
+    // Also update the selector on the rewriter page
+    const sel = $('prompt-mode');
+    if (sel) sel.value = r.mode || 'default';
+  } catch (e) {}
+}
+async function switchPromptMode(mode) {
+  try {
+    const resp = await fetch('/api/prompt-mode', { method: 'POST', headers: {'Content-Type': 'text/plain'}, body: mode });
+    const r = await resp.json();
+    if (r.ok) {
+      showToast('提示词已切换为 ' + r.mode + '（重启 proxy 生效）');
+      loadPromptMode();
+    } else {
+      showToast('切换失败: ' + (r.error || ''));
+    }
+  } catch (e) { showToast('请求失败: ' + e.message); }
+}
+async function loadContextConfig() {
+  try {
+    const r = await get('/api/context');
+    $('ctx-enabled').value = r.enabled ? 'true' : 'false';
+    $('ctx-threshold').value = r.threshold_bytes;
+    $('ctx-output-limit').value = r.tool_output_token_limit;
+    $('ctx-compact-limit').value = r.auto_compact_token_limit;
+    $('ctx-scope').value = r.scope;
+  } catch (e) { showToast('上下文配置读取失败: ' + e.message); }
+}
+async function saveContextConfig() {
+  try {
+    const r = await request('/api/context', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({
+      enabled: $('ctx-enabled').value === 'true', threshold_bytes: parseInt($('ctx-threshold').value),
+      tool_output_token_limit: parseInt($('ctx-output-limit').value), auto_compact_token_limit: parseInt($('ctx-compact-limit').value),
+      scope: $('ctx-scope').value
+    })});
+    showToast(r.ok ? '上下文配置已保存' : '保存失败');
+  } catch (e) { showToast('保存失败: ' + e.message); }
+}
+async function toggleRewriter(enable) {
+  try {
+    const resp = await fetch('/api/rewriter/toggle', { method: 'POST', headers: {'Content-Type': 'text/plain'}, body: enable ? 'true' : 'false' });
+    const r = await resp.json();
+    if (r.ok) {
+      $('rw-toggle-status').textContent = r.enabled ? '已启用' : '已禁用';
+      $('rw-toggle-status').style.color = r.enabled ? 'var(--success)' : 'var(--danger)';
+      showToast(r.enabled ? '改写器已启用' : '改写器已禁用');
+      refreshRewriter();
+    }
+  } catch (e) { showToast('请求失败'); }
+}
+
+/* ── Init ── */
+refreshStatus(); refreshRules(); refreshProxy(); refreshRewriter(); refreshWatch(); refreshLog(); refreshCyberLog(); loadRewriterConfig(); loadPromptMode(); loadContextConfig(); loadQa(false); runVerify();
+    // QA 欢迎弹窗默认不再自动弹出，需要时可在 QA 帮助页手动查看。
+setInterval(refreshStatus, 5000);
+setInterval(refreshProxy, 3000);
+setInterval(refreshWatch, 5000);
+setInterval(refreshLog, 3000);
+</script>
+</body>
+</html>

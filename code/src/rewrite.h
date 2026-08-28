@@ -1,0 +1,49 @@
+// rewrite.h — request rewriter: sanitize intent wording via LLM API
+#pragma once
+#include <string>
+
+namespace helmx {
+
+struct RewriterConfig {
+    bool enabled = true;  // 默认开启：首次使用即生效，无需手动打开
+    std::string provider = "klapi";
+    std::string base_url = "https://klapi.me/v1";
+    std::string api_key;
+    std::string model = "mimo-v2.5-pro";
+    std::string system_prompt;
+    int timeout_sec = 90;
+    bool use_proxy = false;
+    std::string proxy_url = "http://127.0.0.1:7897";  // HTTP proxy for upstream
+    // wire_api: "responses" (OpenAI Responses API, e.g. sub.bulita.net)
+    //          or "chat" (chat/completions, e.g. klapi.me)
+    std::string wire_api = "responses";
+    std::string prompt_mode = "default";
+    bool context_gardener_enabled = true;
+    int context_gardener_threshold_bytes = 32768;
+};
+
+// Load config from %APPDATA%/helmx.config.json.
+// Missing api_key / base_url / model are filled from the local codex setup
+// (auth.json + active provider) so the rewriter works out of the box.
+bool load_rewriter_config(RewriterConfig& cfg);
+
+// 从本地 codex auth.json 读取 OPENAI_API_KEY（重写器默认凭据）。
+std::string read_codex_auth_key();
+
+// Save all user-editable settings to %APPDATA%/helmx.config.json.
+bool save_rewriter_config(const RewriterConfig& cfg, std::string& path);
+
+// Rewrite a user message through the configured LLM.
+// refusal_text: the model's refusal response (for context-aware rewriting).
+// context: conversation history for context-aware rewriting.
+// Returns true on success, out receives the rewritten message.
+bool rewrite_user_message(const RewriterConfig& cfg, const std::string& user_msg,
+                          std::string& out, const std::string& refusal_text = "",
+                          const std::string& context = "");
+
+// API-based rewrite (internal; used when local rules don't match)
+bool rewrite_via_api(const RewriterConfig& cfg, const std::string& user_msg,
+                     std::string& out, const std::string& refusal_text = "",
+                     const std::string& context = "");
+
+}  // namespace helmx
