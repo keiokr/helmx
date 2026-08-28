@@ -14,7 +14,7 @@ deepseek flash一个源代码审计20快没了 还没审计完。
 <br>
 使用：<br>
 1、只要运行exe就可以了，能自启动的默认都给自启动了,确保web自检里面发送激活、(helmx)✓ 激活确认<br>
-2、改写重试-  改写器 Base URL 改成自己的中转平台 ，官方的我没试，用不起！触发了审计，拦截输出，自动给你重写（不是重试、是重写）继续提交，自己前台看不到审计拦截。<br>
+2、改写重试-  改写器 Base URL 改成自己的中转平台 ，官方的我没试，用不起！触发了审计，拦截输出，自动给你重写（不是重试、是重写）继续提交<br>
 3、如果关闭了proxy 需要重启一下codex 
 <br>
 <img width="1990" height="1015" alt="image" src="https://github.com/user-attachments/assets/5595b895-415f-4fd3-adfb-3b57eb387880" /><br>
