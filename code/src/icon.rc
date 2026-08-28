@@ -1,2 +1,0 @@
-// icon.rc — 应用图标资源
-IDI_ICON1 ICON DISCARDABLE "..\\build\\icon.ico"
