@@ -12,12 +12,12 @@
 <img width="1704" height="915" alt="image" src="https://github.com/user-attachments/assets/2049d23d-329a-41c3-b96e-91a34da2529f" /><br><br>
 
 4、还不成功用kokoplus.md<br><br>
+4、还不成功用kokoplus.md + gpt.exe <br><br>
 
 5、使用现有的koko.md让他帮你改md<br><br>
 6、使用现有的kokoplus.md让他帮你改md<br><br>
 7、如果不生效了先部署、让他帮你改md<br>
 https://github.com/lingbol088-spec/codex-gpt-5.6-5.5-instruct<br><br>
-
 
 
 
