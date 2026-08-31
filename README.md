@@ -1,17 +1,17 @@
 
 1、koko.md<br>
 
-直接提问拒绝<br>
+直接提问拒绝<br><br>
 <img width="1084" height="460" alt="image" src="https://github.com/user-attachments/assets/fe09d1eb-b013-4e99-9cea-f54c06de00a7" /><br>
 
 2、部署https://github.com/lingbol088-spec/codex-gpt-5.6-5.5-instruct
-提问继续拒绝<br>
+提问继续拒绝<br><br>
 <img width="1114" height="511" alt="image" src="https://github.com/user-attachments/assets/9cd8f22d-5aa6-4f70-8094-0e99c4972194" /><br>
 
-3、使用现有的koko.md 成功<br>
+3、使用现有的koko.md 成功<br><br>
 <img width="1704" height="915" alt="image" src="https://github.com/user-attachments/assets/2049d23d-329a-41c3-b96e-91a34da2529f" /><br><br>
 
-4、还不成功用kokoplus.md<br>
+4、还不成功用kokoplus.md<br><br>
 
 5、使用现有的koko.md让他帮你改md<br><br>
 6、使用现有的kokoplus.md让他帮你改md<br><br>
